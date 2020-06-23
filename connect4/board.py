@@ -13,7 +13,6 @@ class Board:
         self.history = []
 
     def print(self):
-        pass
         for row in self.board[::-1]:
             print("| " + " | ".join(str(int(c)) for c in row) + " |")
         print()
@@ -32,7 +31,7 @@ class Board:
                 return int(self.board[row][column])
         except IndexError:
             pass
-        return 0
+        return EMPTY_CELL
 
     def is_win(self, player: int, row: int, column: int, r_delta: int, c_delta: int):
         board_slice = []

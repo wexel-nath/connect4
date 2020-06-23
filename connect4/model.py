@@ -45,7 +45,9 @@ class Model:
             batch_size=self.batchSize
         )
 
-    def predict(self, data, index):
+    def predict(self, data, index, debug):
         reshaped_array = np.array(data).reshape(-1, self.numberOfInputs)
         result = self.model.predict(reshaped_array)
+        if debug:
+            print(result)
         return result[0][index]

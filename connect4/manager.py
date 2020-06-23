@@ -5,7 +5,7 @@ from player import PlayerInterface
 
 
 PLAYER_ID = 1
-OPPONENT_ID = -1
+OPPONENT_ID = 2
 
 DRAW = 0
 PLAYING = -2
@@ -28,7 +28,7 @@ class Manager:
         while result == PLAYING:
             # board.print()
             player = self.player if turn % 2 == 0 else self.opponent
-            position = player.get_position(board)
+            position = player.get_position(board, turn)
 
             row = board.drop_piece(position, player.id)
             if not row == -1:
