@@ -54,6 +54,14 @@ class Manager:
 
             print(result) if print_result else None
 
+    def get_results(self):
+        return {
+            'draws': self.draws,
+            'wins': self.wins,
+            'losses': self.losses,
+            'elapsed': "{:.2f}s".format(time() - self.start)
+        }
+
     def print_results(self):
         print("draws:", self.draws)
         print("player one wins:", self.wins)

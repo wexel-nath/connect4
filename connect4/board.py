@@ -21,7 +21,7 @@ class Board:
         for row in range(ROWS):
             if self.board[row][position] == 0:
                 self.board[row][position] = player
-                self.history.append(copy.deepcopy(self.board))
+                # self.history.append(copy.deepcopy(self.board))
                 return row
         return -1
 
@@ -44,6 +44,9 @@ class Board:
                 and player == board_slice[i+2]
                 and player == board_slice[i+3]
             ):
+                self.history.append(copy.deepcopy(self.board))
+                # print("Player {} won".format(player))
+                # self.print()
                 return True
         return False
 
