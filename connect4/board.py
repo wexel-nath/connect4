@@ -8,20 +8,22 @@ EMPTY_CELL = 0
 
 
 class Board:
-    def __init__(self):
+    def __init__(self, debug: bool):
+        self.debug = debug
         self.board = zeros((ROWS, COLUMNS))
         self.history = []
 
     def print(self):
-        for row in self.board[::-1]:
+        if not self.debug:
+            return
+        for row in self.board:
             print("| " + " | ".join(str(int(c)) for c in row) + " |")
         print()
 
     def drop_piece(self, position: int, player: int):
-        for row in range(ROWS):
+        for row in range(ROWS-1, -1, -1):
             if self.board[row][position] == 0:
                 self.board[row][position] = player
-                # self.history.append(copy.deepcopy(self.board))
                 return row
         return -1
 
@@ -45,8 +47,8 @@ class Board:
                 and player == board_slice[i+3]
             ):
                 self.history.append(copy.deepcopy(self.board))
-                # print("Player {} won".format(player))
-                # self.print()
+                if self.debug:
+                    print("Player {} won".format(player))
                 return True
         return False
 
@@ -62,4 +64,4 @@ class Board:
         return ""
 
     def get_valid_moves(self):
-        return [i+1 for i, v in enumerate(self.board[ROWS-1]) if v == EMPTY_CELL]
+        return [i for i, v in enumerate(self.board[0]) if v == EMPTY_CELL]
