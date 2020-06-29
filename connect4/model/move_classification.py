@@ -39,7 +39,7 @@ class Model:
             if history.is_winner(PLAYER_ID):
                 for move in history.get_moves(PLAYER_ID):
                     input.append(move.board)
-                    output.append(move.position - 1)
+                    output.append(move.position)
 
         X = np.array(input).reshape((-1, NUMBER_OF_INPUTS))
         y = to_categorical(output, num_classes=NUMBER_OF_OUTPUTS)
@@ -62,13 +62,12 @@ class Model:
         logger.debug("result: {}", result)
 
         moves = result[0]
-        valid_moves = board.get_valid_moves()
-        move = -1
-        while move == -1:
-            best_move = np.argmax(moves)
-            if best_move in valid_moves:
-                move = best_move
-            else:
-                moves[best_move] = 0
+        sorted_moves = np.argsort(moves)
+        logger.debug("sorted_moves: {}", sorted_moves)
 
-        return move
+        valid_moves = board.get_valid_moves()
+        for m in sorted_moves[::-1]:
+            if m in valid_moves:
+                return m
+
+        return valid_moves[0]

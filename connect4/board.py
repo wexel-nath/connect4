@@ -10,13 +10,13 @@ EMPTY_CELL = 0
 
 class Board:
     def __init__(self):
-        self.board = zeros((ROWS, COLUMNS))
+        self.board = zeros((ROWS, COLUMNS), dtype=int)
         self.history = []
 
     def print(self):
         logger.debug("CONNECT 4")
         for row in self.board:
-            logger.debug("| " + " | ".join(str(int(c)) for c in row) + " |")
+            logger.debug("| " + " | ".join(map(str, row)) + " |")
 
     def drop_piece(self, position: int, player: int):
         for row in range(ROWS - 1, -1, -1):

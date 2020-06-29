@@ -47,7 +47,7 @@ class Manager:
         return result
 
     def simulate(self, num_games: int):
-        for _ in range(num_games):
+        for i in range(1, num_games + 1):
             result = self.play()
             if result == DRAW:
                 self.draws += 1
@@ -57,6 +57,8 @@ class Manager:
                 self.losses += 1
 
             logger.debug("result: {}", result)
+            if i % 100 == 0:
+                logger.info("Simulated {}/{} games", i, num_games)
 
     def get_results(self):
         return {
