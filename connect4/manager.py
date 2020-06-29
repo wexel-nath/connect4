@@ -1,5 +1,6 @@
 from time import time
 
+import logger
 from board import Board
 from history import History, Move
 from player import PlayerInterface
@@ -11,10 +12,9 @@ OPPONENT_ID = 2
 
 
 class Manager:
-    def __init__(self, player: PlayerInterface, opponent: PlayerInterface, debug: bool):
+    def __init__(self, player: PlayerInterface, opponent: PlayerInterface):
         self.player = player
         self.opponent = opponent
-        self.debug = debug
         self.start = time()
         self.history = []
         self.draws = 0
@@ -23,7 +23,7 @@ class Manager:
 
     def play(self):
         turn = 0
-        board = Board(self.debug)
+        board = Board()
         moves = []
         result = PLAYING
         while result == PLAYING:
@@ -56,8 +56,7 @@ class Manager:
             elif result == OPPONENT_ID:
                 self.losses += 1
 
-            if self.debug:
-                print(result)
+            logger.debug("result: {}", result)
 
     def get_results(self):
         return {
@@ -68,7 +67,7 @@ class Manager:
         }
 
     def print_results(self):
-        print("draws:", self.draws)
-        print("player one wins:", self.wins)
-        print("player one loss:", self.losses)
-        print("elapsed:",  "{:.2f}s".format(time() - self.start))
+        logger.info("draws: {}", self.draws)
+        logger.info("player one wins: {}", self.wins)
+        logger.info("player one losses: {}", self.losses)
+        logger.info("elapsed: {:.2f}s", time() - self.start)

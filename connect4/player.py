@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+import logger
 from board import Board
 from model.move_classification import Model
 from random import randint
@@ -16,9 +17,7 @@ class PlayerInterface:
         raise NotImplementedError
 
     def print_win_msg(self, win: str):
-        pass
-        f = "{n} wins on the {w}!"
-        print(f.format(n=self.get_name(), w=win))
+        logger.debug("{} wins on the {}!", self.get_name(), win)
 
 
 class HumanPlayer(PlayerInterface):
@@ -42,7 +41,7 @@ class HumanPlayer(PlayerInterface):
 class RandomPlayer(PlayerInterface):
     def get_position(self, board: Board, turn: int):
         moves = board.get_valid_moves()
-        position = moves[randint(0, len(moves)-1)]
+        position = moves[randint(0, len(moves) - 1)]
         return position
 
     def get_name(self):
@@ -50,22 +49,17 @@ class RandomPlayer(PlayerInterface):
 
 
 class NeuralPlayer(RandomPlayer):
-    def __init__(self, id: int, model: Model, debug: bool):
+    def __init__(self, id: int, model: Model):
         super().__init__(id)
         self.model = model
-        self.debug = debug
 
     def get_position(self, board: Board, turn: int):
         if turn <= 3:
             # random position for first 2 (each) turns of the game
             return super().get_position(board, turn)
 
-        if self.debug:
-            print()
-            print("GET POSITION-------------------------------")
-            board.print()
-
-        return self.model.predict(board, self.id, self.debug)
+        logger.debug("GET POSITION-------------------------------")
+        return self.model.predict(board, self.id)
 
     def get_name(self):
         return "Neural {p}".format(p=self.id)

@@ -5,6 +5,7 @@ from keras.layers import Dense
 from keras.models import Sequential
 from keras.utils import to_categorical
 
+import logger
 from board import Board
 
 NUMBER_OF_INPUTS = 42
@@ -54,22 +55,22 @@ class Model:
             batch_size=BATCH_SIZE
         )
 
-    def predict(self, board: Board, player: int, debug: bool):
+    def predict(self, board: Board, player: int):
         max_value = 0
         moves = board.get_valid_moves()
         best_move = moves[0]
         for move in moves:
-            if debug:
-                print("move:", move)
+            logger.debug("move: {}", move)
             board_copy = deepcopy(board)
             board_copy.drop_piece(move, player)
-            value = self.model.predict(board_copy.board, player, debug)
+            reshaped_array = np.array(
+                board_copy.board).reshape((1, NUMBER_OF_INPUTS))
+            result = self.model.predict(reshaped_array)
+            value = result[0][player]
             if value > max_value:
                 max_value = value
                 best_move = move
 
-        if debug:
-            print("END-------------------------------")
-            print("selected:", best_move)
-            print()
+        logger.debug("END-------------------------------")
+        logger.debug("selected: {}", best_move)
         return best_move

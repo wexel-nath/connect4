@@ -3,6 +3,7 @@ from keras.layers import Dense
 from keras.models import Sequential
 from keras.utils import to_categorical
 
+import logger
 from board import Board
 
 NUMBER_OF_INPUTS = 42
@@ -55,11 +56,10 @@ class Model:
             batch_size=BATCH_SIZE
         )
 
-    def predict(self, board: Board, player: int, debug: bool):
+    def predict(self, board: Board, player: int):
         reshaped_array = np.array(board.board).reshape((1, NUMBER_OF_INPUTS))
         result = self.model.predict(reshaped_array)
-        if debug:
-            print(result)
+        logger.debug("result: {}", result)
 
         moves = result[0]
         valid_moves = board.get_valid_moves()

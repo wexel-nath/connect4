@@ -1,10 +1,11 @@
 from time import time
 
+import logger
 from manager import Manager, PLAYER_ID, OPPONENT_ID
 from model.move_classification import Model
 from player import NeuralPlayer, RandomPlayer, PlayerInterface
+from util import get_full_file_path
 
-DEBUG = False
 MAX_GENS = 10
 
 RANDOM_GAMES = 10000
@@ -33,24 +34,23 @@ class Generation:
     def train(self, dataset):
         start = time()
         self.model.train(dataset)
-        print("Training took {:.2f}s".format(time() - start))
+        logger.info("Training took {:.2f}s", time() - start)
 
     def run(self, number: int):
-        print("Running Generation {}".format(number))
-        player = NeuralPlayer(PLAYER_ID, self.model, DEBUG)
+        logger.info("Running Generation {}", number)
+        player = NeuralPlayer(PLAYER_ID, self.model)
         opponent = RandomPlayer(OPPONENT_ID)
-        manager = Manager(player, opponent, DEBUG)
+        manager = Manager(player, opponent)
         manager.simulate(GENERATION_GAMES)
         manager.print_results()
 
         results = manager.get_results()
-        file = "/tmp/out/gen_{}".format(number)
-        f = File("{}.txt".format(file), "w")
+        f = File(get_full_file_path("gen_{}.txt".format(number)), "w")
         f.write("Generation {}".format(number))
         f.write_dict(results)
         f.close()
 
-        self.model.save("{}.h5".format(file))
+        self.model.save(get_full_file_path("gen_{}.h5".format(number)))
 
         return manager.history
 
@@ -59,12 +59,12 @@ if __name__ == "__main__":
     player = RandomPlayer(PLAYER_ID)
     opponent = RandomPlayer(OPPONENT_ID)
 
-    manager = Manager(player, opponent, DEBUG)
+    manager = Manager(player, opponent)
     manager.simulate(RANDOM_GAMES)
     manager.print_results()
 
     history = manager.history
     generation = Generation()
-    for gen in range(1, MAX_GENS+1):
+    for gen in range(1, MAX_GENS + 1):
         generation.train(history)
         history = generation.run(gen)

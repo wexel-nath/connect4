@@ -1,5 +1,6 @@
 import copy
 
+import logger
 from numpy import zeros
 
 COLUMNS = 7
@@ -8,20 +9,17 @@ EMPTY_CELL = 0
 
 
 class Board:
-    def __init__(self, debug: bool):
-        self.debug = debug
+    def __init__(self):
         self.board = zeros((ROWS, COLUMNS))
         self.history = []
 
     def print(self):
-        if not self.debug:
-            return
+        logger.debug("CONNECT 4")
         for row in self.board:
-            print("| " + " | ".join(str(int(c)) for c in row) + " |")
-        print()
+            logger.debug("| " + " | ".join(str(int(c)) for c in row) + " |")
 
     def drop_piece(self, position: int, player: int):
-        for row in range(ROWS-1, -1, -1):
+        for row in range(ROWS - 1, -1, -1):
             if self.board[row][position] == 0:
                 self.board[row][position] = player
                 return row
@@ -38,17 +36,17 @@ class Board:
     def is_win(self, player: int, row: int, column: int, r_delta: int, c_delta: int):
         board_slice = []
         for d in range(-3, 4):
-            board_slice.append(self.val(row + d*r_delta, column + d*c_delta))
+            board_slice.append(
+                self.val(row + d * r_delta, column + d * c_delta))
         for i in range(4):
             if (
                 player == board_slice[i]
-                and player == board_slice[i+1]
-                and player == board_slice[i+2]
-                and player == board_slice[i+3]
+                and player == board_slice[i + 1]
+                and player == board_slice[i + 2]
+                and player == board_slice[i + 3]
             ):
                 self.history.append(copy.deepcopy(self.board))
-                if self.debug:
-                    print("Player {} won".format(player))
+                logger.debug("Player {} won", player)
                 return True
         return False
 
