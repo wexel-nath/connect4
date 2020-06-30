@@ -1,10 +1,10 @@
 
 class Move:
-    def __init__(self, board, position: int, player: int):
+    def __init__(self, board, action: int, player: int):
         self.board = board
-        self.position = position
+        self.action = action
         self.player = player
-        self.is_winning = False
+        self.is_last_move = False
 
 
 class History:

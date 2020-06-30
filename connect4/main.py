@@ -2,7 +2,7 @@ from time import time
 
 import logger
 from manager import Manager, PLAYER_ID, OPPONENT_ID
-from model.move_classification import Model
+from model.deep_move import Model
 from player import NeuralPlayer, RandomPlayer, PlayerInterface
 from util import get_full_file_path
 
@@ -29,7 +29,7 @@ class File:
 
 class Generation:
     def __init__(self):
-        self.model = Model()
+        self.model = Model(player=1)
 
     def train(self, dataset):
         start = time()

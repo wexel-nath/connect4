@@ -11,7 +11,7 @@ levels = {
     LEVEL_ERROR: "ERROR",
 }
 
-LOG_LEVEL = LEVEL_INFO
+LOG_LEVEL = LEVEL_DEBUG
 
 
 def log(level: int, format: str, *args):

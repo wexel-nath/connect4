@@ -29,15 +29,17 @@ class Manager:
         while result == PLAYING:
             board.print()
             player = self.player if turn % 2 == 0 else self.opponent
-            position = player.get_position(board, turn)
+            action = player.get_action(board, turn)
 
-            move = Move(board.board, position, player.id)
-            row = board.drop_piece(position, player.id)
+            move = Move(board.board, action, player.id)
+            row = board.drop_piece(action, player.id)
             if not row == -1:
                 turn += 1
-                win = board.is_winner(player.id, row, position)
+                win = board.is_winner(player.id, row, action)
                 if not win == "":
-                    move.is_winning = True
+                    # each player has played their last move
+                    moves[-1].is_last_move = True
+                    move.is_last_move = True
                     result = player.id
                 elif turn == 42:
                     result = DRAW

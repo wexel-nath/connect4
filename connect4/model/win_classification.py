@@ -16,7 +16,7 @@ EPOCHS = 100
 
 
 class Model:
-    def __init__(self):
+    def __init__(self, player):
         self.model = Sequential()
         self.model.add(
             Dense(42, activation='relu', input_shape=(NUMBER_OF_INPUTS,))
@@ -57,20 +57,22 @@ class Model:
 
     def predict(self, board: Board, player: int):
         max_value = 0
-        moves = board.get_valid_moves()
-        best_move = moves[0]
-        for move in moves:
-            logger.debug("move: {}", move)
+        actions = board.get_valid_actions()
+        best_action = actions[0]
+        for action in actions:
+            logger.debug("action: {}", action)
             board_copy = deepcopy(board)
-            board_copy.drop_piece(move, player)
+            board_copy.drop_piece(action, player)
             reshaped_array = np.array(
                 board_copy.board).reshape((1, NUMBER_OF_INPUTS))
-            result = self.model.predict(reshaped_array)
-            value = result[0][player]
+            result = self.model.predict(reshaped_array)[0]
+            logger.debug("result: {}", result)
+
+            value = result[player]
             if value > max_value:
                 max_value = value
-                best_move = move
+                best_action = action
 
         logger.debug("END-------------------------------")
-        logger.debug("selected: {}", best_move)
-        return best_move
+        logger.debug("selected: {}", best_action)
+        return best_action

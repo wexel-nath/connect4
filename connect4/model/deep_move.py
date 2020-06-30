@@ -12,42 +12,50 @@ NUMBER_OF_OUTPUTS = 7  # number of actions
 BATCH_SIZE = 50
 EPOCHS = 100
 
+LAST_MOVE_MULTIPLIER = 100
+
 
 class Model:
     def __init__(self, player):
-        self.player = 1
+        self.player = player
         self.model = Sequential()
         self.model.add(
             Dense(42, activation='relu', input_shape=(NUMBER_OF_INPUTS,))
         )
-        self.model.add(Dense(42, activation='relu'))
-        self.model.add(Dense(NUMBER_OF_OUTPUTS, activation='softmax'))
-        self.model.compile(
-            loss='categorical_crossentropy',
-            optimizer="rmsprop",
-            metrics=['accuracy']
-        )
+        self.model.add(Dense(42 * 2, activation='relu'))
+        self.model.add(Dense(42 * 2, activation='relu'))
+        self.model.add(Dense(42 * 2, activation='relu'))
+        self.model.add(Dense(NUMBER_OF_OUTPUTS, activation='linear'))
+        self.model.compile(loss='mse', optimizer="adam")
 
     def save(self, filepath):
         self.model.save(filepath)
 
     def train(self, history_list):
-        input = []
-        output = []
+        num_moves = 0
 
         for history in history_list:
-            if history.is_winner(self.player):
-                for move in history.get_moves(self.player):
-                    input.append(move.board)
-                    output.append(move.action)
+            for move in history.get_moves(self.player):
+                num_moves += 1
+
+        input = []
+        output = np.zeros((num_moves, NUMBER_OF_OUTPUTS))
+        counter = 0
+        for history in history_list:
+            for move in history.get_moves(self.player):
+                input.append(move.board)
+                q = 1 if history.is_winner(self.player) else -1
+                if move.is_last_move:
+                    q *= LAST_MOVE_MULTIPLIER
+                output[counter][move.action] = q
+                counter += 1
 
         X = np.array(input).reshape((-1, NUMBER_OF_INPUTS))
-        y = to_categorical(output, num_classes=NUMBER_OF_OUTPUTS)
         limit = int(0.8 * len(X))
         X_train = X[:limit]
         X_test = X[limit:]
-        y_train = y[:limit]
-        y_test = y[limit:]
+        y_train = output[:limit]
+        y_test = output[limit:]
         self.model.fit(
             X_train,
             y_train,

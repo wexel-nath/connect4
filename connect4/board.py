@@ -7,6 +7,8 @@ COLUMNS = 7
 ROWS = 6
 EMPTY_CELL = 0
 
+BOARD_DEBUG = False
+
 
 class Board:
     def __init__(self):
@@ -14,14 +16,16 @@ class Board:
         self.history = []
 
     def print(self):
+        if not BOARD_DEBUG:
+            return
         logger.debug("CONNECT 4")
         for row in self.board:
             logger.debug("| " + " | ".join(map(str, row)) + " |")
 
-    def drop_piece(self, position: int, player: int):
-        for row in range(ROWS - 1, -1, -1):
-            if self.board[row][position] == 0:
-                self.board[row][position] = player
+    def drop_piece(self, action: int, player: int):
+        for row in reversed(range(ROWS)):
+            if self.board[row][action] == 0:
+                self.board[row][action] = player
                 return row
         return -1
 
@@ -61,5 +65,5 @@ class Board:
             return "negative diagonal"
         return ""
 
-    def get_valid_moves(self):
+    def get_valid_actions(self):
         return [i for i, v in enumerate(self.board[0]) if v == EMPTY_CELL]

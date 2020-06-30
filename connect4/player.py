@@ -1,16 +1,16 @@
+import random
 from copy import deepcopy
 
 import logger
 from board import Board
-from model.move_classification import Model
-from random import randint
+from model.deep_move import Model
 
 
 class PlayerInterface:
     def __init__(self, id: int):
         self.id = id
 
-    def get_position(self, board: Board, turn: int):
+    def get_action(self, board: Board, turn: int):
         raise NotImplementedError
 
     def get_name(self):
@@ -21,31 +21,29 @@ class PlayerInterface:
 
 
 class HumanPlayer(PlayerInterface):
-    def get_position(self, board: Board, turn: int):
-        position = -1
-        moves = board.get_valid_moves()
-        while position not in moves:
-            f = "{n} to move, enter {m}: "
-            pos = input(f.format(n=self.get_name(), m=moves))
+    def get_action(self, board: Board, turn: int):
+        action = -1
+        actions = board.get_valid_actions()
+        while action not in actions:
+            pos = input(f"{self.get_name()}'s turn, enter {actions}: ")
             try:
-                position = int(pos)
+                action = int(pos)
             except:
-                position = -1
+                action = -1
 
-        return position
+        return action
 
     def get_name(self):
-        return "Player {p}".format(p=self.id)
+        return f"Player {self.id}"
 
 
 class RandomPlayer(PlayerInterface):
-    def get_position(self, board: Board, turn: int):
-        moves = board.get_valid_moves()
-        position = moves[randint(0, len(moves) - 1)]
-        return position
+    def get_action(self, board: Board, turn: int):
+        actions = board.get_valid_actions()
+        return random.choice(actions)
 
     def get_name(self):
-        return "Random {p}".format(p=self.id)
+        return f"Random {self.id}"
 
 
 class NeuralPlayer(RandomPlayer):
@@ -53,13 +51,13 @@ class NeuralPlayer(RandomPlayer):
         super().__init__(id)
         self.model = model
 
-    def get_position(self, board: Board, turn: int):
+    def get_action(self, board: Board, turn: int):
         if turn <= 3:
-            # random position for first 2 (each) turns of the game
-            return super().get_position(board, turn)
+            # random action for first 2 (each) turns of the game
+            return super().get_action(board, turn)
 
         logger.debug("GET POSITION-------------------------------")
         return self.model.predict(board, self.id)
 
     def get_name(self):
-        return "Neural {p}".format(p=self.id)
+        return f"Neural {self.id}"
