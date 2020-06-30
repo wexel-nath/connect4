@@ -43,6 +43,7 @@ class Manager:
                     result = player.id
                 elif turn == 42:
                     result = DRAW
+                player.learn(move, board.board, result)
                 moves.append(move)
 
         self.history.append(History(result, moves, board.board))

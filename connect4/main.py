@@ -2,14 +2,14 @@ from time import time
 
 import logger
 from manager import Manager, PLAYER_ID, OPPONENT_ID
-from model.deep_move import Model
+from model.deep_q import Model
 from player import NeuralPlayer, RandomPlayer, PlayerInterface
 from util import get_full_file_path
 
 MAX_GENS = 10
 
-RANDOM_GAMES = 10000
-GENERATION_GAMES = 10000
+RANDOM_GAMES = 0
+GENERATION_GAMES = 1000
 
 
 class File:
