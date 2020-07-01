@@ -5,6 +5,7 @@ from keras.utils import to_categorical
 
 import logger
 from board import Board
+from history import PLAYING
 
 NUMBER_OF_INPUTS = 42
 NUMBER_OF_OUTPUTS = 7  # number of actions
@@ -45,7 +46,7 @@ class Model:
             for move in history.get_moves(self.player):
                 input.append(move.board)
                 q = 1 if history.is_winner(self.player) else -1
-                if move.is_last_move:
+                if move.result != PLAYING:
                     q *= LAST_MOVE_MULTIPLIER
                 output[counter][move.action] = q
                 counter += 1

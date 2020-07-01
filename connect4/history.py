@@ -1,10 +1,25 @@
+DRAW = 0
+PLAYING = -2
+
 
 class Move:
     def __init__(self, board, action: int, player: int):
         self.board = board
+        self.next_board = None
         self.action = action
         self.player = player
-        self.is_last_move = False
+        self.result = PLAYING
+
+    def get_terminal(self):
+        return self.result not in (DRAW, PLAYING)
+
+    def get_reward(self):
+        rewards = {
+            DRAW: 0,
+            PLAYING: 0,
+            self.player: 1,
+        }
+        return rewards.get(self.result, -1)
 
 
 class History:

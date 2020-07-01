@@ -20,9 +20,6 @@ class PlayerInterface:
     def get_name(self):
         raise NotImplementedError
 
-    def learn(self, move: Move, next_board, result):
-        pass
-
     def print_win_msg(self, win: str):
         logger.debug("{} wins on the {}!", self.get_name(), win)
 
@@ -43,9 +40,6 @@ class HumanPlayer(PlayerInterface):
     def get_name(self):
         return f"Player {self.id}"
 
-    def learn(self, move: Move, next_board, result):
-        pass
-
 
 class RandomPlayer(PlayerInterface):
     def get_action(self, board: Board, turn: int):
@@ -55,9 +49,6 @@ class RandomPlayer(PlayerInterface):
     def get_name(self):
         return f"Random {self.id}"
 
-    def learn(self, move: Move, next_board, result):
-        pass
-
 
 class NeuralPlayer(RandomPlayer):
     def __init__(self, id: int, model: Model):
@@ -65,30 +56,8 @@ class NeuralPlayer(RandomPlayer):
         self.model = model
 
     def get_action(self, board: Board, turn: int):
-        # if turn <= 3:
-        #     # random action for first 2 (each) turns of the game
-        #     return super().get_action(board, turn)
-
-        logger.debug("GET POSITION-------------------------------")
+        logger.debug("GET ACTION-------------------------------")
         return self.model.predict(board, self.id)
 
     def get_name(self):
         return f"Neural {self.id}"
-
-    def learn(self, move: Move, next_board, result):
-        self.model.remember(
-            move.board,
-            move.action,
-            get_reward(self.id, result),
-            next_board,
-            result != PLAYING,
-        )
-        self.model.experience_replay()
-
-
-def get_reward(player: int, result: int) -> int:
-    if result in (DRAW, PLAYING):
-        return 0
-    if player == result:
-        return 1
-    return -1

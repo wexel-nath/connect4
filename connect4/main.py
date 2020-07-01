@@ -8,7 +8,7 @@ from util import get_full_file_path
 
 MAX_GENS = 10
 
-RANDOM_GAMES = 0
+RANDOM_GAMES = 1000
 GENERATION_GAMES = 1000
 
 

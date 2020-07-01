@@ -10,82 +10,61 @@ from keras.utils import to_categorical
 import logger
 from board import Board, ROWS, COLUMNS
 
-NUMBER_OF_INPUTS = 42
-NUMBER_OF_OUTPUTS = 7  # number of actions
+GAMMA = 0.95
+LEARNING_RATE = 0.001
+
+EXPLORATION_MAX = 1.0
+EXPLORATION_MIN = 0.05
+EXPLORATION_DECAY = 0.8
+
+NUM_INPUTS = 42
+NUM_ACTIONS = 7
+SHAPE = (1, NUM_INPUTS)
 
 
 class Model:
     def __init__(self, player):
-        self.BATCH_SIZE = 32
-        self.GAMMA = 0.95
-        self.LEARNING_RATE = 0.001
-
-        self.EXPLORATION_MAX = 1.0
-        self.EXPLORATION_MIN = 0.0
-        self.EXPLORATION_DECAY = 0.995
-
-        self.exploration_rate = self.EXPLORATION_MAX
-        self.is_fit = False
-        self.memory = deque(maxlen=512)
+        self.exploration_rate = EXPLORATION_MAX
 
         self.player = player
         self.model = Sequential()
-        self.model.add(
-            Dense(42, activation='relu', input_shape=(NUMBER_OF_INPUTS,))
-        )
-        hidden_neurons = NUMBER_OF_INPUTS * NUMBER_OF_OUTPUTS * 2
-        self.model.add(Dense(hidden_neurons, activation="relu"))
-        self.model.add(Dense(hidden_neurons, activation="relu"))
-        self.model.add(Dense(hidden_neurons, activation="relu"))
-        self.model.add(Dense(hidden_neurons, activation="relu"))
-        self.model.add(Dense(NUMBER_OF_OUTPUTS, activation="linear"))
-        self.model.compile(loss="mse", optimizer=Adam(lr=self.LEARNING_RATE))
+        self.model.add(Dense(42, activation='relu', input_shape=(NUM_INPUTS,)))
+        num_neurons = NUM_INPUTS * NUM_ACTIONS * 2
+        self.model.add(Dense(num_neurons, activation="relu"))
+        self.model.add(Dense(num_neurons, activation="relu"))
+        self.model.add(Dense(num_neurons, activation="relu"))
+        self.model.add(Dense(num_neurons, activation="relu"))
+        self.model.add(Dense(NUM_ACTIONS, activation="linear"))
+        self.model.compile(loss="mse", optimizer=Adam(lr=LEARNING_RATE))
+
+        empty_board = np.zeros(SHAPE)
+        initial_q_values = np.zeros((1, NUM_ACTIONS))
+        self.model.fit(empty_board, initial_q_values, verbose=0)
 
     def save(self, filepath):
         self.model.save(filepath)
 
-    def remember(self, state, action, reward, next_state, terminal):
-        state = np.array(state).reshape((1, NUMBER_OF_INPUTS))
-        next_state = np.array(next_state).reshape((1, NUMBER_OF_INPUTS))
-        self.memory.append((state, action, reward, next_state, terminal))
-
-    def experience_replay(self):
-        if self.is_fit:
-            self.exploration_rate *= self.EXPLORATION_DECAY
-            self.exploration_rate = max(
-                self.EXPLORATION_MIN, self.exploration_rate)
-
-        if len(self.memory) < self.BATCH_SIZE:
-            return
-        batch = random.sample(self.memory, self.BATCH_SIZE)
-        batch[-1] = self.memory[-1]
-        if self.BATCH_SIZE > 1:
-            batch[-2] = self.memory[-1]
-        if not self.is_fit:
-            states = list(map(lambda _: _[0][0], batch))
-            states = np.array(states)
-            self.model.fit(states, np.zeros(
-                (len(batch), NUMBER_OF_OUTPUTS)), verbose=0)
-
-        for state, action, reward, next_state, terminal in batch:
-            q_update = reward
-            if not terminal:
-                q_update = (reward + self.GAMMA *
-                            np.amax(self.model.predict(next_state)[0]))
-            q_values = self.model.predict(state)
-            q_values[0][action] = q_update
-            self.model.fit(state, q_values, verbose=0)
-        self.is_fit = True
-
     def train(self, history_list):
-        pass
+        self.exploration_rate *= EXPLORATION_DECAY
+        self.exploration_rate = max(EXPLORATION_MIN, self.exploration_rate)
+
+        for history in history_list:
+            for move in history.get_moves(self.player):
+                state = np.array(move.board).reshape(SHAPE)
+                q = move.get_reward()
+                if not move.get_terminal():
+                    next_state = np.array(move.next_board).reshape(SHAPE)
+                    q += GAMMA * np.amax(self.model.predict(next_state)[0])
+                q_values = self.model.predict(state)
+                q_values[0][move.action] = q
+                self.model.fit(state, q_values, verbose=0)
 
     def predict(self, board: Board, player: int):
         actions = board.get_valid_actions()
         if np.random.rand() < self.exploration_rate:
             return random.choice(actions)
 
-        state = np.array(board.board).reshape((1, NUMBER_OF_INPUTS))
+        state = np.array(board.board).reshape(SHAPE)
         q_values = self.model.predict(state)[0]
         logger.debug("q_values: {}", q_values)
 

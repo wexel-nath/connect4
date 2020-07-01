@@ -31,22 +31,22 @@ class Manager:
             player = self.player if turn % 2 == 0 else self.opponent
             action = player.get_action(board, turn)
 
-            move = Move(board.board, action, player.id)
+            move = Move(board.board.copy(), action, player.id)
             row = board.drop_piece(action, player.id)
             if not row == -1:
                 turn += 1
                 win = board.is_winner(player.id, row, action)
                 if not win == "":
-                    # each player has played their last move
-                    moves[-1].is_last_move = True
-                    move.is_last_move = True
                     result = player.id
                 elif turn == 42:
                     result = DRAW
-                player.learn(move, board.board, result)
+                if len(moves) > 0:
+                    moves[-1].result = result
+                    moves[-1].next_board = board.board.copy()
+                move.result = result
                 moves.append(move)
 
-        self.history.append(History(result, moves, board.board))
+        self.history.append(History(result, moves, board.board.copy()))
         return result
 
     def simulate(self, num_games: int):
