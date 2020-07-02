@@ -8,8 +8,8 @@ from util import get_full_file_path
 
 MAX_GENS = 10
 
-RANDOM_GAMES = 1000
-GENERATION_GAMES = 1000
+RANDOM_GAMES = 10000
+GENERATION_GAMES = 10000
 
 
 class File:

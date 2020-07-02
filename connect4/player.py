@@ -1,13 +1,8 @@
 import random
-from copy import deepcopy
 
 import logger
 from board import Board
-from history import Move
 from model.deep_q import Model
-
-PLAYING = -2
-DRAW = 0
 
 
 class PlayerInterface:

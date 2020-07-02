@@ -48,7 +48,8 @@ class Model:
         self.exploration_rate *= EXPLORATION_DECAY
         self.exploration_rate = max(EXPLORATION_MIN, self.exploration_rate)
 
-        for history in history_list:
+        num_history = len(history_list)
+        for i, history in enumerate(history_list, start=1):
             for move in history.get_moves(self.player):
                 state = np.array(move.board).reshape(SHAPE)
                 q = move.get_reward()
@@ -58,6 +59,9 @@ class Model:
                 q_values = self.model.predict(state)
                 q_values[0][move.action] = q
                 self.model.fit(state, q_values, verbose=0)
+
+            if i % 100 == 0:
+                logger.info("Trained {}/{} games", i, num_history)
 
     def predict(self, board: Board, player: int):
         actions = board.get_valid_actions()

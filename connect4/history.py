@@ -1,6 +1,11 @@
 DRAW = 0
 PLAYING = -2
 
+REWARD_DRAW = -1
+REWARD_MOVE = -1
+REWARD_WIN = 20
+REWARD_LOSS = -20
+
 
 class Move:
     def __init__(self, board, action: int, player: int):
@@ -15,11 +20,11 @@ class Move:
 
     def get_reward(self):
         rewards = {
-            DRAW: 0,
-            PLAYING: 0,
-            self.player: 1,
+            DRAW: REWARD_DRAW,
+            PLAYING: REWARD_MOVE,
+            self.player: REWARD_WIN,
         }
-        return rewards.get(self.result, -1)
+        return rewards.get(self.result, REWARD_LOSS)
 
 
 class History:
