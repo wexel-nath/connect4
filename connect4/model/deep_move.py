@@ -6,6 +6,7 @@ from keras.utils import to_categorical
 import logger
 from board import Board
 from history import PLAYING
+from model import ModelInterface
 
 NUMBER_OF_INPUTS = 42
 NUMBER_OF_OUTPUTS = 7  # number of actions
@@ -16,7 +17,7 @@ EPOCHS = 100
 LAST_MOVE_MULTIPLIER = 100
 
 
-class Model:
+class Model(ModelInterface):
     def __init__(self, player):
         self.player = player
         self.model = Sequential()

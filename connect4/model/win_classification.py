@@ -7,6 +7,7 @@ from keras.utils import to_categorical
 
 import logger
 from board import Board
+from model import ModelInterface
 
 NUMBER_OF_INPUTS = 42
 NUMBER_OF_OUTPUTS = 3  # draw/win/loss %
@@ -15,7 +16,7 @@ BATCH_SIZE = 50
 EPOCHS = 100
 
 
-class Model:
+class Model(ModelInterface):
     def __init__(self, player):
         self.model = Sequential()
         self.model.add(

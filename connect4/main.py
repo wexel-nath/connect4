@@ -2,12 +2,12 @@ from time import time
 
 import logger
 from manager import Manager, PLAYER_ID, OPPONENT_ID
-from model.deep_q import Model
+from model.double_deep_q import Model
 from player import NeuralPlayer, RandomPlayer, PlayerInterface
 from util import get_full_file_path
 
 MAX_GENS = 100
-NUM_GAMES = 100
+NUM_GAMES = 1000
 
 
 class File:
@@ -59,7 +59,8 @@ if __name__ == "__main__":
     history = []
     generation = Generation()
     for gen in range(0, MAX_GENS + 1):
-        generation.train(history)
+        if len(history) > 0:
+            generation.train(history)
         history, results = generation.run(gen)
 
         win_rate = results['wins'] / NUM_GAMES * 100

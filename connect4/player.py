@@ -2,7 +2,7 @@ import random
 
 import logger
 from board import Board
-from model.deep_q import Model
+from model import ModelInterface
 
 
 class PlayerInterface:
@@ -46,7 +46,7 @@ class RandomPlayer(PlayerInterface):
 
 
 class NeuralPlayer(RandomPlayer):
-    def __init__(self, id: int, model: Model):
+    def __init__(self, id: int, model: ModelInterface):
         super().__init__(id)
         self.model = model
 
