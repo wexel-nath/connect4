@@ -6,10 +6,8 @@ from model.deep_q import Model
 from player import NeuralPlayer, RandomPlayer, PlayerInterface
 from util import get_full_file_path
 
-MAX_GENS = 10
-
-RANDOM_GAMES = 10000
-GENERATION_GAMES = 10000
+MAX_GENS = 100
+NUM_GAMES = 100
 
 
 class File:
@@ -36,35 +34,39 @@ class Generation:
         self.model.train(dataset)
         logger.info("Training took {:.2f}s", time() - start)
 
-    def run(self, number: int):
-        logger.info("Running Generation {}", number)
+    def run(self, gen: int):
+        logger.info("Running Generation {}", gen)
         player = NeuralPlayer(PLAYER_ID, self.model)
         opponent = RandomPlayer(OPPONENT_ID)
-        manager = Manager(player, opponent)
-        manager.simulate(GENERATION_GAMES)
+        manager = Manager(gen, player, opponent)
+        manager.simulate(NUM_GAMES)
         manager.print_results()
 
         results = manager.get_results()
-        f = File(get_full_file_path("gen_{}.txt".format(number)), "w")
-        f.write("Generation {}".format(number))
+        f = File(get_full_file_path(f"gen_{gen}.txt"), "w")
         f.write_dict(results)
         f.close()
 
-        self.model.save(get_full_file_path("gen_{}.h5".format(number)))
+        self.model.save(get_full_file_path(f"gen_{gen}.h5"))
 
-        return manager.history
+        return manager.history, results
 
 
 if __name__ == "__main__":
-    player = RandomPlayer(PLAYER_ID)
-    opponent = RandomPlayer(OPPONENT_ID)
+    best_win_rate = 0.0
+    best_results = {}
 
-    manager = Manager(player, opponent)
-    manager.simulate(RANDOM_GAMES)
-    manager.print_results()
-
-    history = manager.history
+    history = []
     generation = Generation()
-    for gen in range(1, MAX_GENS + 1):
+    for gen in range(0, MAX_GENS + 1):
         generation.train(history)
-        history = generation.run(gen)
+        history, results = generation.run(gen)
+
+        win_rate = results['wins'] / NUM_GAMES * 100
+        if win_rate > best_win_rate:
+            best_win_rate = win_rate
+            logger.info("New best win rate. Generation {}: {}%", gen, win_rate)
+
+            f = File(get_full_file_path("gen_best.txt"), "w")
+            f.write_dict(results)
+            f.close()

@@ -12,7 +12,8 @@ OPPONENT_ID = 2
 
 
 class Manager:
-    def __init__(self, player: PlayerInterface, opponent: PlayerInterface):
+    def __init__(self, gen: int, player: PlayerInterface, opponent: PlayerInterface):
+        self.gen = gen
         self.player = player
         self.opponent = opponent
         self.start = time()
@@ -65,6 +66,7 @@ class Manager:
 
     def get_results(self):
         return {
+            'generation': self.gen,
             'draws': self.draws,
             'wins': self.wins,
             'losses': self.losses,
@@ -72,6 +74,7 @@ class Manager:
         }
 
     def print_results(self):
+        logger.info("Generation {} results", self.gen)
         logger.info("draws: {}", self.draws)
         logger.info("player one wins: {}", self.wins)
         logger.info("player one losses: {}", self.losses)
