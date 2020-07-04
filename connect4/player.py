@@ -9,7 +9,7 @@ class PlayerInterface:
     def __init__(self, id: int):
         self.id = id
 
-    def get_action(self, board: Board, turn: int):
+    def get_action(self, board: Board):
         raise NotImplementedError
 
     def get_name(self):
@@ -20,7 +20,7 @@ class PlayerInterface:
 
 
 class HumanPlayer(PlayerInterface):
-    def get_action(self, board: Board, turn: int):
+    def get_action(self, board: Board):
         action = -1
         actions = board.get_valid_actions()
         while action not in actions:
@@ -37,7 +37,7 @@ class HumanPlayer(PlayerInterface):
 
 
 class RandomPlayer(PlayerInterface):
-    def get_action(self, board: Board, turn: int):
+    def get_action(self, board: Board):
         actions = board.get_valid_actions()
         return random.choice(actions)
 
@@ -50,7 +50,7 @@ class NeuralPlayer(RandomPlayer):
         super().__init__(id)
         self.model = model
 
-    def get_action(self, board: Board, turn: int):
+    def get_action(self, board: Board):
         logger.debug("GET ACTION-------------------------------")
         return self.model.predict(board, self.id)
 

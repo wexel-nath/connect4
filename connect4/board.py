@@ -1,7 +1,8 @@
 import copy
 
-import logger
 from numpy import zeros
+
+import logger
 
 COLUMNS = 7
 ROWS = 6
@@ -9,11 +10,14 @@ EMPTY_CELL = 0
 
 BOARD_DEBUG = False
 
+PLAYING = 100
+DRAW = 101
+ILLEGAL_MOVE = 110
+
 
 class Board:
     def __init__(self):
         self.board = zeros((ROWS, COLUMNS), dtype=int)
-        self.history = []
 
     def print(self):
         if not BOARD_DEBUG:
@@ -22,12 +26,22 @@ class Board:
         for row in self.board:
             logger.debug("| " + " | ".join(map(str, row)) + " |")
 
+    def handle_action(self, action, player):
+        row = self.drop_piece(action, player)
+        if row == ILLEGAL_MOVE:
+            return ILLEGAL_MOVE
+        if self.is_winner(player, row, action):
+            return player
+        if self.is_draw():
+            return DRAW
+        return PLAYING
+
     def drop_piece(self, action: int, player: int):
         for row in reversed(range(ROWS)):
             if self.board[row][action] == 0:
                 self.board[row][action] = player
                 return row
-        return -1
+        return ILLEGAL_MOVE
 
     def val(self, row: int, column: int):
         try:
@@ -36,6 +50,12 @@ class Board:
         except IndexError:
             pass
         return EMPTY_CELL
+
+    def is_draw(self):
+        for c in range(COLUMNS):
+            if self.board[0][c] == EMPTY_CELL:
+                return False
+        return True
 
     def is_win(self, player: int, row: int, column: int, r_delta: int, c_delta: int):
         board_slice = []
@@ -49,7 +69,6 @@ class Board:
                 and player == board_slice[i + 2]
                 and player == board_slice[i + 3]
             ):
-                self.history.append(copy.deepcopy(self.board))
                 logger.debug("Player {} won", player)
                 return True
         return False

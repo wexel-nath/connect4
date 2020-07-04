@@ -1,12 +1,10 @@
 from time import time
 
 import logger
-from board import Board
+from board import Board, DRAW, ILLEGAL_MOVE, PLAYING
 from history import History, Move
 from player import PlayerInterface
 
-PLAYING = -2
-DRAW = 0
 PLAYER_ID = 1
 OPPONENT_ID = 2
 
@@ -14,6 +12,7 @@ OPPONENT_ID = 2
 class Manager:
     def __init__(self, gen: int, player: PlayerInterface, opponent: PlayerInterface):
         self.gen = gen
+        self.current_player = player.id
         self.player = player
         self.opponent = opponent
         self.start = time()
@@ -32,35 +31,39 @@ class Manager:
         }
         self.illegal_moves = 0
 
+    def get_player(self):
+        if self.current_player == self.player.id:
+            return self.player
+        return self.opponent
+
+    def switch_player(self):
+        if self.current_player == self.player.id:
+            self.current_player = self.opponent.id
+        else:
+            self.current_player = self.player.id
+
     def play(self):
-        turn = 0
         board = Board()
         moves = []
         result = PLAYING
         while result == PLAYING:
             board.print()
-            player = self.player if turn % 2 == 0 else self.opponent
-            action = player.get_action(board, turn)
+            player = self.get_player()
+            action = player.get_action(board)
 
             move = Move(board.board.copy(), action, player.id)
-            row = board.drop_piece(action, player.id)
-            if row == -1:
-                result = self.opponent.id  # illegal move
+            result = board.handle_action(action, player.id)
+            if result == ILLEGAL_MOVE:
+                result = self.opponent.id
                 self.illegal_moves += 1
-            else:
-                # if not row == -1:
-                turn += 1
-                win = board.is_winner(player.id, row, action)
-                if not win == "":
-                    result = player.id
-                elif turn == 42:
-                    result = DRAW
+
             if len(moves) > 0:
                 moves[-1].result = result
                 moves[-1].next_board = board.board.copy()
             move.result = result
             moves.append(move)
             self.actions[action] += 1
+            self.switch_player()
 
         self.history.append(History(result, moves, board.board.copy()))
         return result

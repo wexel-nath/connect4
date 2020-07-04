@@ -1,5 +1,8 @@
 from collections import deque
+import os
 import random
+
+os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
 
 import numpy as np
 from keras.layers import Dense, Flatten
@@ -16,7 +19,7 @@ LEARNING_RATE = 0.001
 
 EXPLORATION_MAX = 1.0
 EXPLORATION_MIN = 0.05
-EXPLORATION_DECAY = 0.95
+EXPLORATION_DECAY = 0.6
 
 NUM_INPUTS = 42
 NUM_ACTIONS = 7
@@ -27,7 +30,6 @@ def build_neural_net():
     model = Sequential()
     model.add(Dense(42, activation='relu', input_shape=(NUM_INPUTS,)))
     num_neurons = NUM_INPUTS * NUM_ACTIONS * 2
-    model.add(Dense(num_neurons, activation="relu"))
     model.add(Dense(num_neurons, activation="relu"))
     model.add(Dense(num_neurons, activation="relu"))
     model.add(Dense(num_neurons, activation="relu"))

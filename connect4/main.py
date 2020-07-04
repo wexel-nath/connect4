@@ -6,8 +6,8 @@ from model.double_deep_q import Model
 from player import NeuralPlayer, RandomPlayer, PlayerInterface
 from util import get_full_file_path
 
-MAX_GENS = 100
-NUM_GAMES = 1000
+MAX_GENS = 10
+NUM_GAMES = 10000
 
 
 class File:
@@ -18,8 +18,8 @@ class File:
         self.file.write(line + "\n")
 
     def write_dict(self, dict):
-        for k, v in dict.items():
-            self.write("{}: {}".format(k, v))
+        for key, val in dict.items():
+            self.write(f"{key}: {val}")
 
     def close(self):
         self.file.close()
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         win_rate = results['wins'] / NUM_GAMES * 100
         if win_rate > best_win_rate:
             best_win_rate = win_rate
-            logger.info("New best win rate. Generation {}: {}%", gen, win_rate)
+            logger.info("New best win rate. Gen {}: {:.1f}%", gen, win_rate)
 
             f = File(get_full_file_path("gen_best.txt"), "w")
             f.write_dict(results)

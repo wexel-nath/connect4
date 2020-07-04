@@ -1,10 +1,9 @@
-DRAW = 0
-PLAYING = -2
+from board import DRAW, PLAYING
 
 REWARD_DRAW = -1
 REWARD_MOVE = -1
-REWARD_WIN = 20
-REWARD_LOSS = -20
+REWARD_WIN = 100
+REWARD_LOSS = -100
 
 
 class Move:
@@ -16,7 +15,7 @@ class Move:
         self.result = PLAYING
 
     def get_terminal(self):
-        return self.result not in (DRAW, PLAYING)
+        return self.result != PLAYING
 
     def get_reward(self):
         rewards = {
