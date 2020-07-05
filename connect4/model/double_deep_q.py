@@ -1,4 +1,3 @@
-from collections import deque
 import os
 import random
 
@@ -14,43 +13,41 @@ import logger
 from board import Board, ROWS, COLUMNS
 from model import ModelInterface
 
-GAMMA = 0.95
-LEARNING_RATE = 0.001
-
 EXPLORATION_MAX = 1.0
-EXPLORATION_MIN = 0.05
-EXPLORATION_DECAY = 0.6
+EXPLORATION_MIN = 0.01
 
 NUM_INPUTS = 42
 NUM_ACTIONS = 7
 SHAPE = (1, NUM_INPUTS)
 
 
-def build_neural_net():
+def build_neural_net(lr=0.001):
     model = Sequential()
     model.add(Dense(42, activation='relu', input_shape=(NUM_INPUTS,)))
-    num_neurons = NUM_INPUTS * NUM_ACTIONS * 2
+    num_neurons = NUM_INPUTS * 2
     model.add(Dense(num_neurons, activation="relu"))
     model.add(Dense(num_neurons, activation="relu"))
     model.add(Dense(num_neurons, activation="relu"))
     model.add(Dense(NUM_ACTIONS, activation="linear"))
-    model.compile(loss="mse", optimizer=Adam(lr=LEARNING_RATE))
+    model.compile(loss="mse", optimizer=Adam(lr=lr))
 
     return model
 
 
 class Model(ModelInterface):
-    def __init__(self, player):
-        self.exploration_rate = EXPLORATION_MAX
+    def __init__(self, player, decay=0.9998, learning_rate=0.001, gamma=0.95):
         self.player = player
-        self.model = build_neural_net()
-        self.target = build_neural_net()
+        self.decay = decay
+        self.gamma = gamma
+        self.exploration_rate = EXPLORATION_MAX
+        self.model = build_neural_net(lr=learning_rate)
+        self.target = build_neural_net(lr=learning_rate)
 
     def save(self, filepath):
         self.model.save(filepath)
 
     def train(self, history_list):
-        self.exploration_rate *= EXPLORATION_DECAY
+        self.exploration_rate *= self.decay
         self.exploration_rate = max(EXPLORATION_MIN, self.exploration_rate)
         self.target.set_weights(self.model.get_weights())
 
@@ -61,7 +58,8 @@ class Model(ModelInterface):
                 q = move.get_reward()
                 if not move.get_terminal():
                     next_state = np.array(move.next_board).reshape(SHAPE)
-                    q += GAMMA * np.amax(self.target.predict(next_state)[0])
+                    q += self.gamma * \
+                        np.amax(self.target.predict(next_state)[0])
                 q_values = self.model.predict(state)
                 q_values[0][move.action] = q
                 self.model.fit(state, q_values, verbose=0)

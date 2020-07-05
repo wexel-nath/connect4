@@ -1,9 +1,13 @@
+from collections import deque
 from time import time
 
 import logger
 from board import Board, DRAW, ILLEGAL_MOVE, PLAYING
+from file import File
 from history import History, Move
+from model import ModelInterface
 from player import PlayerInterface
+from util import get_full_file_path
 
 PLAYER_ID = 1
 OPPONENT_ID = 2
@@ -81,6 +85,31 @@ class Manager:
             logger.debug("result: {}", result)
             if i % 100 == 0:
                 logger.info("Simulated {}/{} games", i, num_games)
+
+    def simulate_and_train(self, num_games: int, model: ModelInterface):
+        result_history = deque(maxlen=100)
+        best_win_rate = 0.0
+
+        for i in range(1, num_games + 1):
+            result = self.play()
+            result_history.append(result)
+            model.train([self.history[-1]])
+
+            win_rate = result_history.count(PLAYER_ID) / len(result_history)
+            message = f"Win rate: {win_rate * 100:.1f}%"
+            if len(result_history) >= 100 and win_rate > best_win_rate:
+                best_win_rate = win_rate
+                message += " PB"
+                if win_rate >= 0.95:
+                    model.save(get_full_file_path(f"pb_{win_rate}.h5"))
+            logger.info(message)
+            logger.debug("result: {}", result)
+            if i % 10 == 0:
+                f = File(get_full_file_path("win_rates.csv"), "a")
+                f.write(f"{i},{win_rate:.2f}")
+                f.close()
+            if i % 100 == 0:
+                logger.info("Simulated and trained {}/{} games", i, num_games)
 
     def get_results(self):
         return {

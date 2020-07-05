@@ -1,28 +1,15 @@
 from time import time
 
 import logger
+from file import File
+from hyperparameters import DECAY, GAMMA, LEARNING_RATE
 from manager import Manager, PLAYER_ID, OPPONENT_ID
 from model.double_deep_q import Model
 from player import NeuralPlayer, RandomPlayer, PlayerInterface
 from util import get_full_file_path
 
-MAX_GENS = 10
-NUM_GAMES = 10000
-
-
-class File:
-    def __init__(self, name: str, mode: str):
-        self.file = open(name, mode)
-
-    def write(self, line: str):
-        self.file.write(line + "\n")
-
-    def write_dict(self, dict):
-        for key, val in dict.items():
-            self.write(f"{key}: {val}")
-
-    def close(self):
-        self.file.close()
+MAX_GENS = 100
+NUM_GAMES = 1000
 
 
 class Generation:
@@ -52,9 +39,8 @@ class Generation:
         return manager.history, results
 
 
-if __name__ == "__main__":
+def run_generation():
     best_win_rate = 0.0
-    best_results = {}
 
     history = []
     generation = Generation()
@@ -71,3 +57,19 @@ if __name__ == "__main__":
             f = File(get_full_file_path("gen_best.txt"), "w")
             f.write_dict(results)
             f.close()
+
+
+def run_single_and_train():
+    number_of_games = MAX_GENS * NUM_GAMES
+    model = Model(player=1, decay=DECAY,
+                  learning_rate=LEARNING_RATE, gamma=GAMMA)
+
+    player = NeuralPlayer(PLAYER_ID, model)
+    opponent = RandomPlayer(OPPONENT_ID)
+    manager = Manager(1, player, opponent)
+
+    manager.simulate_and_train(number_of_games, model)
+
+
+if __name__ == "__main__":
+    run_single_and_train()
