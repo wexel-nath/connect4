@@ -4,8 +4,8 @@ import random
 os.environ["KERAS_BACKEND"] = "plaidml.keras.backend"
 
 import numpy as np
-from keras.layers import Dense, Flatten
-from keras.models import Sequential
+from keras.layers import Dense, Flatten, LeakyReLU
+from keras.models import Sequential, load_model
 from keras.optimizers import Adam
 from keras.utils import to_categorical
 
@@ -22,12 +22,18 @@ SHAPE = (1, NUM_INPUTS)
 
 
 def build_neural_net(lr=0.001):
+    alpha = 0.1
+
     model = Sequential()
-    model.add(Dense(42, activation='relu', input_shape=(NUM_INPUTS,)))
+    model.add(Dense(42, input_shape=(NUM_INPUTS,)))
+    model.add(LeakyReLU(alpha=alpha))
     num_neurons = NUM_INPUTS * 2
-    model.add(Dense(num_neurons, activation="relu"))
-    model.add(Dense(num_neurons, activation="relu"))
-    model.add(Dense(num_neurons, activation="relu"))
+    model.add(Dense(num_neurons))
+    model.add(LeakyReLU(alpha=alpha))
+    model.add(Dense(num_neurons))
+    model.add(LeakyReLU(alpha=alpha))
+    model.add(Dense(num_neurons))
+    model.add(LeakyReLU(alpha=alpha))
     model.add(Dense(NUM_ACTIONS, activation="linear"))
     model.compile(loss="mse", optimizer=Adam(lr=lr))
 
@@ -46,6 +52,13 @@ class Model(ModelInterface):
     def save(self, filepath):
         self.model.save(filepath)
 
+    def load(self, filepath):
+        self.exploration_rate = EXPLORATION_MIN
+        self.model = load_model(filepath)
+
+    def _reshape_board(self, board):
+        return np.array(self.player * board).reshape(SHAPE)
+
     def train(self, history_list):
         self.exploration_rate *= self.decay
         self.exploration_rate = max(EXPLORATION_MIN, self.exploration_rate)
@@ -54,10 +67,10 @@ class Model(ModelInterface):
         num_history = len(history_list)
         for i, history in enumerate(history_list, start=1):
             for move in history.get_moves(self.player):
-                state = np.array(move.board).reshape(SHAPE)
+                state = self._reshape_board(move.board)
                 q = move.get_reward()
                 if not move.get_terminal():
-                    next_state = np.array(move.next_board).reshape(SHAPE)
+                    next_state = self._reshape_board(move.next_board)
                     q += self.gamma * \
                         np.amax(self.target.predict(next_state)[0])
                 q_values = self.model.predict(state)
@@ -72,7 +85,7 @@ class Model(ModelInterface):
         if np.random.rand() < self.exploration_rate:
             return random.choice(actions)
 
-        state = np.array(board.board).reshape(SHAPE)
+        state = self._reshape_board(board.board)
         q_values = self.model.predict(state)[0]
         logger.debug("q_values: {}", q_values)
 

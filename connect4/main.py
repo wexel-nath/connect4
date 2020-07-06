@@ -25,7 +25,7 @@ class Generation:
         logger.info("Running Generation {}", gen)
         player = NeuralPlayer(PLAYER_ID, self.model)
         opponent = RandomPlayer(OPPONENT_ID)
-        manager = Manager(gen, player, opponent)
+        manager = Manager(gen, player, opponent, player.id)
         manager.simulate(NUM_GAMES)
         manager.print_results()
 
@@ -60,13 +60,18 @@ def run_generation():
 
 
 def run_single_and_train():
-    number_of_games = MAX_GENS * NUM_GAMES
-    model = Model(player=1, decay=DECAY,
+    number_of_games = 1000000
+    model = Model(player=PLAYER_ID, decay=DECAY,
                   learning_rate=LEARNING_RATE, gamma=GAMMA)
-
     player = NeuralPlayer(PLAYER_ID, model)
     opponent = RandomPlayer(OPPONENT_ID)
-    manager = Manager(1, player, opponent)
+
+    # fixed_model = Model(player=OPPONENT_ID, decay=DECAY,
+    #                     learning_rate=LEARNING_RATE, gamma=GAMMA)
+    # fixed_model.load(m)
+    # opponent = NeuralPlayer(OPPONENT_ID, fixed_model)
+
+    manager = Manager(1, player, opponent, player.id)
 
     manager.simulate_and_train(number_of_games, model)
 

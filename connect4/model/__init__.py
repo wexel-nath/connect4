@@ -2,6 +2,9 @@ class ModelInterface:
     def save(self, filepath):
         raise NotImplementedError
 
+    def load(self, filepath):
+        raise NotImplementedError
+
     def train(self, history_list):
         raise NotImplementedError
 

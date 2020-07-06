@@ -44,6 +44,9 @@ class Model(ModelInterface):
     def save(self, filepath):
         self.model.save(filepath)
 
+    def load(self, filepath):
+        self.model = load_model(filepath)
+
     def train(self, history_list):
         self.exploration_rate *= EXPLORATION_DECAY
         self.exploration_rate = max(EXPLORATION_MIN, self.exploration_rate)

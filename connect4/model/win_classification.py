@@ -33,6 +33,9 @@ class Model(ModelInterface):
     def save(self, filepath):
         self.model.save(filepath)
 
+    def load(self, filepath):
+        self.model = load_model(filepath)
+
     def train(self, history_list):
         input = []
         output = []

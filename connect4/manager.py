@@ -1,22 +1,24 @@
 from collections import deque
+from copy import deepcopy
 from time import time
 
 import logger
 from board import Board, DRAW, ILLEGAL_MOVE, PLAYING
 from file import File
+from graph import plot_win_rates
 from history import History, Move
 from model import ModelInterface
-from player import PlayerInterface
+from player import PlayerInterface, RandomPlayer, NeuralPlayer
 from util import get_full_file_path
 
 PLAYER_ID = 1
-OPPONENT_ID = 2
+OPPONENT_ID = -1
 
 
 class Manager:
-    def __init__(self, gen: int, player: PlayerInterface, opponent: PlayerInterface):
+    def __init__(self, gen: int, player: PlayerInterface, opponent: PlayerInterface, current_player=PLAYER_ID):
         self.gen = gen
-        self.current_player = player.id
+        self.current_player = current_player
         self.player = player
         self.opponent = opponent
         self.start = time()
@@ -89,6 +91,7 @@ class Manager:
     def simulate_and_train(self, num_games: int, model: ModelInterface):
         result_history = deque(maxlen=100)
         best_win_rate = 0.0
+        win_rate_csv = get_full_file_path("win_rates.csv")
 
         for i in range(1, num_games + 1):
             result = self.play()
@@ -97,7 +100,7 @@ class Manager:
 
             win_rate = result_history.count(PLAYER_ID) / len(result_history)
             message = f"Win rate: {win_rate * 100:.1f}%"
-            if len(result_history) >= 100 and win_rate > best_win_rate:
+            if len(result_history) >= 100 and win_rate >= best_win_rate:
                 best_win_rate = win_rate
                 message += " PB"
                 if win_rate >= 0.95:
@@ -105,11 +108,16 @@ class Manager:
             logger.info(message)
             logger.debug("result: {}", result)
             if i % 10 == 0:
-                f = File(get_full_file_path("win_rates.csv"), "a")
+                f = File(win_rate_csv, "a")
                 f.write(f"{i},{win_rate:.2f}")
                 f.close()
             if i % 100 == 0:
                 logger.info("Simulated and trained {}/{} games", i, num_games)
+            # if i % 1000 == 0:
+            #     self.vs_random(i / 1000, model)
+
+        plot_win_rates(win_rate_csv, display=False)
+        model.save(get_full_file_path("model.h5"))
 
     def get_results(self):
         return {
@@ -130,3 +138,16 @@ class Manager:
         logger.info("elapsed: {:.2f}s", time() - self.start)
         logger.info("actions: {}", self.actions)
         logger.info("illegal moves: {}", self.illegal_moves)
+
+    def vs_random(self, gen, model):
+        player = NeuralPlayer(PLAYER_ID, model)
+        opponent = RandomPlayer(OPPONENT_ID)
+
+        result_history = []
+        manager = Manager(gen, player, opponent, player.id)
+        for _ in range(100):
+            result = manager.play()
+            result_history.append(result)
+
+        win_rate = result_history.count(PLAYER_ID) / len(result_history)
+        logger.info(f"Win rate against random: {win_rate * 100:.1f}%")

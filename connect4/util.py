@@ -4,7 +4,7 @@ from hyperparameters import DECAY, GAMMA, LEARNING_RATE
 
 
 def get_folder_name():
-    folder = f"d-{DECAY}_g-{GAMMA}_lr-{LEARNING_RATE}"
+    folder = f"leaky-relu_d-{DECAY}_g-{GAMMA}_lr-{LEARNING_RATE}"
     dir = os.path.join(os.getcwd(), "out", folder)
     if not os.path.exists(dir):
         os.makedirs(dir)
