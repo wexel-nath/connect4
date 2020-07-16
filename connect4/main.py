@@ -2,79 +2,72 @@ from time import time
 
 import logger
 from file import File
-from hyperparameters import DECAY, GAMMA, LEARNING_RATE
+from hyperparameters import DECAY, DEPTH, GAMMA, LEARNING_RATE
 from manager import Manager, PLAYER_ID, OPPONENT_ID
 from model.double_deep_q import Model
-from player import NeuralPlayer, RandomPlayer, PlayerInterface
+from player import MinimaxPlayer, NeuralPlayer, RandomPlayer, PlayerInterface
 from util import get_full_file_path
 
 MAX_GENS = 100
 NUM_GAMES = 1000
 
 
-class Generation:
-    def __init__(self):
-        self.model = Model(player=1)
+def sim_generation(gen: int, num_games: int, prev_model_path: str, player_turn: int):
+    opponent_model = Model(player=OPPONENT_ID, decay=DECAY,
+                           learning_rate=LEARNING_RATE, gamma=GAMMA,
+                           explore_min=0.0)
+    opponent_model.load(prev_model_path)
+    opponent = NeuralPlayer(OPPONENT_ID, opponent_model, turn=0)
 
-    def train(self, dataset):
-        start = time()
-        self.model.train(dataset)
-        logger.info("Training took {:.2f}s", time() - start)
+    player_model = Model(player=PLAYER_ID, decay=DECAY,
+                         learning_rate=LEARNING_RATE, gamma=GAMMA,
+                         explore_min=0.01)
+    player = NeuralPlayer(PLAYER_ID, player_model, turn=player_turn)
 
-    def run(self, gen: int):
-        logger.info("Running Generation {}", gen)
-        player = NeuralPlayer(PLAYER_ID, self.model)
-        opponent = RandomPlayer(OPPONENT_ID)
+    current_player = player.id if player_turn == 1 else opponent.id
+    manager = Manager(gen, player, opponent, current_player)
+    manager.simulate_and_learn(num_games, player.id)
+
+    player.save(gen)
+
+
+def run():
+    number_of_games = 100000
+
+    def run_gen(gen: int):
+        player_model = Model(player=PLAYER_ID, decay=DECAY,
+                             learning_rate=LEARNING_RATE, gamma=GAMMA,
+                             explore_min=0.1)
+        if gen > 0:
+            prev_model_path = get_full_file_path("p1_model.h5", f"gen{gen-1}")
+            player_model.load(prev_model_path)
+        player = NeuralPlayer(PLAYER_ID, player_model, turn=1)
+
+        opponent_model = Model(player=OPPONENT_ID, decay=DECAY,
+                               learning_rate=LEARNING_RATE, gamma=GAMMA,
+                               explore_min=0.1)
+        if gen > 0:
+            prev_model_path = get_full_file_path("p2_model.h5", f"gen{gen-1}")
+            opponent_model.load(prev_model_path)
+        opponent = NeuralPlayer(OPPONENT_ID, opponent_model, turn=2)
+
+        # opponent = RandomPlayer(OPPONENT_ID, turn=1)
+
         manager = Manager(gen, player, opponent, player.id)
-        manager.simulate(NUM_GAMES)
-        manager.print_results()
+        manager.simulate_and_learn(number_of_games, player.id)
 
-        results = manager.get_results()
-        f = File(get_full_file_path(f"gen_{gen}.txt"), "w")
-        f.write_dict(results)
-        f.close()
+        player.save(gen)
+        opponent.save(gen)
 
-        self.model.save(get_full_file_path(f"gen_{gen}.h5"))
+    run_gen(1)
 
-        return manager.history, results
+    # for gen in range(4, 6):
+    #     prev_model_path = get_full_file_path("p1_model.h5", f"gen{gen-1}")
+    #     sim_generation(gen, number_of_games, prev_model_path, player_turn=2)
 
-
-def run_generation():
-    best_win_rate = 0.0
-
-    history = []
-    generation = Generation()
-    for gen in range(0, MAX_GENS + 1):
-        if len(history) > 0:
-            generation.train(history)
-        history, results = generation.run(gen)
-
-        win_rate = results['wins'] / NUM_GAMES * 100
-        if win_rate > best_win_rate:
-            best_win_rate = win_rate
-            logger.info("New best win rate. Gen {}: {:.1f}%", gen, win_rate)
-
-            f = File(get_full_file_path("gen_best.txt"), "w")
-            f.write_dict(results)
-            f.close()
-
-
-def run_single_and_train():
-    number_of_games = 1000000
-    model = Model(player=PLAYER_ID, decay=DECAY,
-                  learning_rate=LEARNING_RATE, gamma=GAMMA)
-    player = NeuralPlayer(PLAYER_ID, model)
-    opponent = RandomPlayer(OPPONENT_ID)
-
-    # fixed_model = Model(player=OPPONENT_ID, decay=DECAY,
-    #                     learning_rate=LEARNING_RATE, gamma=GAMMA)
-    # fixed_model.load(m)
-    # opponent = NeuralPlayer(OPPONENT_ID, fixed_model)
-
-    manager = Manager(1, player, opponent, player.id)
-
-    manager.simulate_and_train(number_of_games, model)
+    #     prev_model_path = get_full_file_path("p2_model.h5", f"gen{gen}")
+    #     sim_generation(gen, number_of_games, prev_model_path, player_turn=1)
 
 
 if __name__ == "__main__":
-    run_single_and_train()
+    run()

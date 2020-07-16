@@ -5,7 +5,7 @@ class ModelInterface:
     def load(self, filepath):
         raise NotImplementedError
 
-    def train(self, history_list):
+    def train(self, history):
         raise NotImplementedError
 
     def predict(self, board, player):

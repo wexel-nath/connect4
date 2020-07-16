@@ -11,10 +11,10 @@ from keras.utils import to_categorical
 
 import logger
 from board import Board, ROWS, COLUMNS
+from history import History
 from model import ModelInterface
 
-EXPLORATION_MAX = 1.0
-EXPLORATION_MIN = 0.01
+EXPLORE_MAX = 1.0
 
 NUM_INPUTS = 42
 NUM_ACTIONS = 7
@@ -41,11 +41,12 @@ def build_neural_net(lr=0.001):
 
 
 class Model(ModelInterface):
-    def __init__(self, player, decay=0.9998, learning_rate=0.001, gamma=0.95):
+    def __init__(self, player, decay=0.9998, learning_rate=0.001, gamma=0.95, explore_min=0.01):
         self.player = player
         self.decay = decay
         self.gamma = gamma
-        self.exploration_rate = EXPLORATION_MAX
+        self.explore_rate = EXPLORE_MAX
+        self.explore_min = explore_min
         self.model = build_neural_net(lr=learning_rate)
         self.target = build_neural_net(lr=learning_rate)
 
@@ -53,39 +54,36 @@ class Model(ModelInterface):
         self.model.save(filepath)
 
     def load(self, filepath):
-        self.exploration_rate = EXPLORATION_MIN
+        self.explore_rate = self.explore_min
         self.model = load_model(filepath)
 
     def _reshape_board(self, board):
         return np.array(self.player * board).reshape(SHAPE)
 
-    def train(self, history_list):
-        self.exploration_rate *= self.decay
-        self.exploration_rate = max(EXPLORATION_MIN, self.exploration_rate)
+    def train(self, history: History):
+        self.explore_rate *= self.decay
+        self.explore_rate = max(self.explore_min, self.explore_rate)
         self.target.set_weights(self.model.get_weights())
 
-        num_history = len(history_list)
-        for i, history in enumerate(history_list, start=1):
-            for move in history.get_moves(self.player):
-                state = self._reshape_board(move.board)
-                q = move.get_reward()
-                if not move.get_terminal():
-                    next_state = self._reshape_board(move.next_board)
-                    q += self.gamma * \
-                        np.amax(self.target.predict(next_state)[0])
-                q_values = self.model.predict(state)
-                q_values[0][move.action] = q
-                self.model.fit(state, q_values, verbose=0)
-
-            if i % 100 == 0:
-                logger.info("Trained {}/{} games", i, num_history)
+        for move in history.get_moves(self.player):
+            state = self._reshape_board(move.board)
+            q = move.get_reward()
+            if not move.get_terminal():
+                next_state = self._reshape_board(move.next_board)
+                q += self.gamma * \
+                    np.amax(self.target.predict(next_state)[0])
+            q_values = self.model.predict(state)
+            q_values[0][move.action] = q
+            self.model.fit(state, q_values, verbose=0)
 
     def predict(self, board: Board, player: int):
-        actions = board.get_valid_actions()
-        if np.random.rand() < self.exploration_rate:
-            return random.choice(actions)
+        return self.predict_with_board_array(board.board, board.get_valid_actions())
 
-        state = self._reshape_board(board.board)
+    def predict_with_board_array(self, board, valid_actions):
+        if np.random.rand() < self.explore_rate:
+            return random.choice(valid_actions)
+
+        state = self._reshape_board(board)
         q_values = self.model.predict(state)[0]
         logger.debug("q_values: {}", q_values)
 

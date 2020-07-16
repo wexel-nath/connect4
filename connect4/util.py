@@ -1,16 +1,25 @@
 import os
 
-from hyperparameters import DECAY, GAMMA, LEARNING_RATE
+from hyperparameters import DECAY, DEPTH, GAMMA, LEARNING_RATE
+
+VERSION = 4
+
+folders = {}
 
 
-def get_folder_name():
-    folder = f"leaky-relu_d-{DECAY}_g-{GAMMA}_lr-{LEARNING_RATE}"
-    dir = os.path.join(os.getcwd(), "out", folder)
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+def get_folder_name(sub_dir: str):
+    global folders
+    path = folders.get(sub_dir, "")
+    if path != "":
+        return path
 
-    return dir
+    folder = f"v-{VERSION}_d-{DECAY}_g-{GAMMA}_lr-{LEARNING_RATE}"
+    folder_name = os.path.join(os.getcwd(), "out", folder, sub_dir)
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+    folders[sub_dir] = folder_name
+    return folder_name
 
 
-def get_full_file_path(file: str):
-    return os.path.join(get_folder_name(), file)
+def get_full_file_path(file: str, sub_dir: str = ""):
+    return os.path.join(get_folder_name(sub_dir), file)

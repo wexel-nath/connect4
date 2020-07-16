@@ -18,6 +18,7 @@ ILLEGAL_MOVE = 110
 class Board:
     def __init__(self):
         self.board = zeros((ROWS, COLUMNS), dtype=int)
+        self.state = PLAYING
 
     def print(self):
         if not BOARD_DEBUG:
@@ -31,8 +32,10 @@ class Board:
         if row == ILLEGAL_MOVE:
             return ILLEGAL_MOVE
         if self.is_winner(player, row, action):
+            self.state = player
             return player
         if self.is_draw():
+            self.state = DRAW
             return DRAW
         return PLAYING
 
@@ -85,4 +88,74 @@ class Board:
         return ""
 
     def get_valid_actions(self):
-        return [i for i, v in enumerate(self.board[0]) if v == EMPTY_CELL]
+        return get_valid_actions(self.board)
+
+
+def get_valid_actions(board):
+    return [i for i, v in enumerate(board[0]) if v == EMPTY_CELL]
+
+
+def static_eval(board, player, opponent):
+    player_score = piece_eval(board, player, opponent)
+    opponent_score = piece_eval(board, opponent, player)
+    return player_score - opponent_score
+
+
+def piece_eval(board, player, opponent):  # static evaluation of the current board state
+    score = 0
+    WINDOW_LENGTH = 4
+
+    # Score center column
+    score += evaluate_center(board, player, opponent)
+
+    # Score Horizontal
+    for r in range(ROWS):
+        row_array = [i for i in list(board[r, :])]
+        for c in range(COLUMNS - 3):
+            window = row_array[c:c + WINDOW_LENGTH]
+            score += evaluate_window(window, player, opponent)
+
+    # Score Vertical
+    for c in range(COLUMNS):
+        col_array = [i for i in list(board[:, c])]
+        for r in range(ROWS - 3):
+            window = col_array[r:r + WINDOW_LENGTH]
+            score += evaluate_window(window, player, opponent)
+
+    # Score positive sloped diagonal
+    for r in range(ROWS - 3):
+        for c in range(COLUMNS - 3):
+            window = [board[r + i][c + i] for i in range(WINDOW_LENGTH)]
+            score += evaluate_window(window, player, opponent)
+
+    for r in range(ROWS - 3):
+        for c in range(COLUMNS - 3):
+            window = [board[r + 3 - i][c + i] for i in range(WINDOW_LENGTH)]
+            score += evaluate_window(window, player, opponent)
+
+    return score
+
+
+def evaluate_center(board, player, opponent):
+    center_array = [i for i in list(board[:, COLUMNS // 2])]
+    center_count = center_array.count(player)
+    return center_count * 3
+
+
+def evaluate_window(window, player, opponent):  # evaluate score of current window
+    score = 0
+
+    if window.count(player) == 4:
+        score += 100
+    elif window.count(player) == 3 and window.count(EMPTY_CELL) == 1:
+        score += 5
+    elif window.count(player) == 2 and window.count(EMPTY_CELL) == 2:
+        score += 2
+
+    # BLOCK OPPONENTS TRIPLES
+    if window.count(opponent) == 3 and window.count(EMPTY_CELL) == 1:
+        score -= 4
+    # elif window.count(opp_piece) == 2 and window.count(self.EMPTY_PIECE) == 2:
+    #     score -= 9
+
+    return score
