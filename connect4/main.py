@@ -1,3 +1,4 @@
+import os
 from time import time
 
 import logger
@@ -7,9 +8,6 @@ from manager import Manager, PLAYER_ID, OPPONENT_ID
 from model.double_deep_q import Model
 from player import MinimaxPlayer, NeuralPlayer, RandomPlayer, PlayerInterface
 from util import get_full_file_path
-
-MAX_GENS = 100
-NUM_GAMES = 1000
 
 
 def sim_generation(gen: int, num_games: int, prev_model_path: str, player_turn: int):
@@ -37,21 +35,20 @@ def run():
     def run_gen(gen: int):
         player_model = Model(player=PLAYER_ID, decay=DECAY,
                              learning_rate=LEARNING_RATE, gamma=GAMMA,
-                             explore_min=0.1)
-        if gen > 0:
-            prev_model_path = get_full_file_path("p1_model.h5", f"gen{gen-1}")
-            player_model.load(prev_model_path)
-        player = NeuralPlayer(PLAYER_ID, player_model, turn=1)
+                             explore_min=0.05)
 
         opponent_model = Model(player=OPPONENT_ID, decay=DECAY,
                                learning_rate=LEARNING_RATE, gamma=GAMMA,
-                               explore_min=0.1)
-        if gen > 0:
-            prev_model_path = get_full_file_path("p2_model.h5", f"gen{gen-1}")
-            opponent_model.load(prev_model_path)
-        opponent = NeuralPlayer(OPPONENT_ID, opponent_model, turn=2)
+                               explore_min=0.05)
 
-        # opponent = RandomPlayer(OPPONENT_ID, turn=1)
+        if gen > 0:
+            player_path = get_full_file_path("p1_model.h5", f"gen{gen-1}")
+            player_model.load(player_path)
+            opponent_path = get_full_file_path("p2_model.h5", f"gen{gen-1}")
+            opponent_model.load(opponent_path)
+
+        player = NeuralPlayer(PLAYER_ID, player_model, turn=1)
+        opponent = NeuralPlayer(OPPONENT_ID, opponent_model, turn=2)
 
         manager = Manager(gen, player, opponent, player.id)
         manager.simulate_and_learn(number_of_games, player.id)
@@ -59,7 +56,13 @@ def run():
         player.save(gen)
         opponent.save(gen)
 
-    run_gen(1)
+        random_player = RandomPlayer(PLAYER_ID, turn=1)
+        random_opponent = RandomPlayer(OPPONENT_ID, turn=2)
+        manager = Manager(gen, player, random_opponent, player.id)
+        manager = Manager(gen, random_player, opponent, player.id)
+
+    gen = int(os.environ.get('GEN'))
+    run_gen(gen)
 
     # for gen in range(4, 6):
     #     prev_model_path = get_full_file_path("p1_model.h5", f"gen{gen-1}")

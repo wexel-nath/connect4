@@ -15,11 +15,10 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-
 p1_model = Model(player=PLAYER_ID, explore_min=0.0)
-p1_model.load(get_full_file_path("p1_model.h5", "gen1"))
+p1_model.load(get_full_file_path("p1_model.h5", "gen9"))
 p2_model = Model(player=OPPONENT_ID, explore_min=0.0)
-p2_model.load(get_full_file_path("p2_model.h5", "gen1"))
+p2_model.load(get_full_file_path("p2_model.h5", "gen9"))
 
 
 @app.route("/action/p1", methods=['POST'])
