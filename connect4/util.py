@@ -2,7 +2,7 @@ import os
 
 from hyperparameters import DECAY, DEPTH, GAMMA, LEARNING_RATE
 
-VERSION = 7
+VERSION = 10
 
 folders = {}
 

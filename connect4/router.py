@@ -8,7 +8,7 @@ import numpy as np
 from board import get_valid_actions, COLUMNS, ROWS
 import logger
 from manager import PLAYER_ID, OPPONENT_ID
-from model.double_deep_q import Model
+from model.ddqn_influence import Model
 from util import get_full_file_path
 
 app = Flask(__name__)
@@ -16,9 +16,9 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 p1_model = Model(player=PLAYER_ID, explore_min=0.0)
-p1_model.load(get_full_file_path("p1_model.h5", "gen9"))
+p1_model.load(get_full_file_path("p1_model.h5", "gen6"))
 p2_model = Model(player=OPPONENT_ID, explore_min=0.0)
-p2_model.load(get_full_file_path("p2_model.h5", "gen9"))
+p2_model.load(get_full_file_path("p2_model.h5", "gen6"))
 
 
 @app.route("/action/p1", methods=['POST'])
@@ -38,7 +38,7 @@ def process_p1():
                 new_board[row][col] = PLAYER_ID
 
     valid_actions = get_valid_actions(new_board)
-    action = p1_model.predict_with_board_array(new_board, valid_actions)
+    action = p1_model.predict_with_board_array(new_board, valid_actions, True)
 
     return {
         'move': int(action)
@@ -62,7 +62,7 @@ def process_p2():
                 new_board[row][col] = PLAYER_ID
 
     valid_actions = get_valid_actions(new_board)
-    action = p2_model.predict_with_board_array(new_board, valid_actions)
+    action = p2_model.predict_with_board_array(new_board, valid_actions, true)
 
     return {
         'move': int(action)
@@ -73,8 +73,7 @@ def process_p2():
 def health():
     return {
         'result': {
-            'status': 'ok',
-            'image': os.environ.get('IMAGE_TAG')
+            'status': 'ok'
         },
         'messages': [],
     }

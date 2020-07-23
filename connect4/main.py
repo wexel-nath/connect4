@@ -5,7 +5,7 @@ import logger
 from file import File
 from hyperparameters import DECAY, DEPTH, GAMMA, LEARNING_RATE
 from manager import Manager, PLAYER_ID, OPPONENT_ID
-from model.double_deep_q import Model
+from model.ddqn_influence import Model
 from player import MinimaxPlayer, NeuralPlayer, RandomPlayer, PlayerInterface
 from util import get_full_file_path
 
@@ -35,11 +35,11 @@ def run():
     def run_gen(gen: int):
         player_model = Model(player=PLAYER_ID, decay=DECAY,
                              learning_rate=LEARNING_RATE, gamma=GAMMA,
-                             explore_min=0.05)
+                             explore_min=0.01)
 
         opponent_model = Model(player=OPPONENT_ID, decay=DECAY,
                                learning_rate=LEARNING_RATE, gamma=GAMMA,
-                               explore_min=0.05)
+                               explore_min=0.01)
 
         if gen > 0:
             player_path = get_full_file_path("p1_model.h5", f"gen{gen-1}")
@@ -55,11 +55,6 @@ def run():
 
         player.save(gen)
         opponent.save(gen)
-
-        random_player = RandomPlayer(PLAYER_ID, turn=1)
-        random_opponent = RandomPlayer(OPPONENT_ID, turn=2)
-        manager = Manager(gen, player, random_opponent, player.id)
-        manager = Manager(gen, random_player, opponent, player.id)
 
     gen = int(os.environ.get('GEN'))
     run_gen(gen)
